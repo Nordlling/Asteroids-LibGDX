@@ -1,5 +1,6 @@
 package com.test.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -11,6 +12,8 @@ public class Ship {
 
 	private final Vector2 position = new Vector2();
 	private final Vector2 angle = new Vector2();
+
+	private final float speed = 300f;
 
 	private final Texture texture;
 	private final TextureRegion textureRegion;
@@ -45,7 +48,13 @@ public class Ship {
 	}
 
 	public void moveTo(Vector2 direction) {
+		direction = new Vector2(direction.nor().x * speed * Gdx.graphics.getDeltaTime(), direction.nor().y * speed * Gdx.graphics.getDeltaTime());
 		position.add(direction);
+	}
+
+	public void moveTo() {
+		Vector2 direction = angle.nor();
+		position.add(new Vector2(direction.x * speed * Gdx.graphics.getDeltaTime(), direction.y * speed * Gdx.graphics.getDeltaTime()));
 	}
 
 	public void rotateTo(Vector2 mousePos) {
@@ -54,5 +63,9 @@ public class Ship {
 
 	public Vector2 getPosition() {
 		return position;
+	}
+
+	public Vector2 getAngle(){
+		return angle;
 	}
 }
