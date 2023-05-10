@@ -1,0 +1,7 @@
+{
+  "fileName": "Config/BulletConfig.json",
+  "textureName" : "PNG/Lasers/laserBlue02.png",
+  "width": 10,
+  "height": 30,
+  "speed" : 500
+}

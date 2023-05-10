@@ -6,33 +6,58 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
+import com.test.game.Config.AsteroidConfig;
+import com.test.game.Game;
 import com.test.game.Space.Asteroid;
 import com.test.game.Renderable;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 public class AsteroidSpawner implements Spawner<Asteroid>, Renderable {
 
-    private static AsteroidSpawner instance;
+    private static final AsteroidConfig asteroidConfig = Game.getConfigManager().getConfig(AsteroidConfig.class);
 
-    private String folderPath = "PNG/Meteors";
-    private FileHandle[] fileNames = Gdx.files.internal(folderPath).list();
+    private FileHandle[] fileNames = Gdx.files.internal(asteroidConfig.folderTexture).list();
+    private Array<String> fileNamesFromJar = new Array<>();
     private Array<Texture> textures = new Array<>();
     private Array<Asteroid> asteroids = new Array<>();
 
     private Batch batch;
 
-    private final int COUNT = 15;
 
-    public AsteroidSpawner(Batch batch) {
-        if (instance != null) {
-            System.err.println("No duplicate AsteroidSpawner");
-        }
+
+    public AsteroidSpawner(Batch batch) throws IOException {
         this.batch = batch;
-        instance = this;
-        for(FileHandle fileName : fileNames) {
-            Texture texture = new Texture(fileName);
-            textures.add(texture);
+
+        if (fileNames.length == 0) {
+            String jarFilePath = AsteroidSpawner.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            JarFile jarFile = new JarFile(jarFilePath);
+            Enumeration<JarEntry> entries = jarFile.entries();
+
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                if (!entry.isDirectory() && entry.getName().startsWith(asteroidConfig.folderTexture)) {
+                    fileNamesFromJar.add(entry.getName());
+                }
+            }
+            jarFile.close();
+            for(String fileName : fileNamesFromJar) {
+                Texture texture = new Texture(fileName);
+                textures.add(texture);
+            }
+        } else {
+            for (FileHandle fileName : fileNames) {
+                Texture texture = new Texture(fileName);
+                textures.add(texture);
+            }
         }
-        spawn(COUNT);
+        spawn(asteroidConfig.count);
+
     }
 
     private void spawn(int count) {
@@ -51,12 +76,10 @@ public class AsteroidSpawner implements Spawner<Asteroid>, Renderable {
 
     @Override
     public void render() {
-        if (asteroids.size < COUNT) {
-            spawn(COUNT - asteroids.size);
+        if (asteroids.size < asteroidConfig.count) {
+            spawn(asteroidConfig.count - asteroids.size);
         }
         for (Asteroid asteroid : asteroids) {
-            asteroid.rotateTo();
-            asteroid.moveTo();
             asteroid.render(batch);
         }
     }
@@ -74,5 +97,12 @@ public class AsteroidSpawner implements Spawner<Asteroid>, Renderable {
     @Override
     public void add(Asteroid asteroid) {
         asteroids.add(asteroid);
+    }
+
+    @Override
+    public void dispose() {
+        for (Asteroid asteroid : asteroids) {
+            asteroid.dispose();
+        }
     }
 }

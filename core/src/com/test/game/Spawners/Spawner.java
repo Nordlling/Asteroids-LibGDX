@@ -12,4 +12,6 @@ public interface Spawner<T> {
 
     void add(T object);
 
+    void dispose();
+
 }

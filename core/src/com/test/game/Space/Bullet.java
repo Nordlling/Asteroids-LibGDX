@@ -1,130 +1,92 @@
 package com.test.game.Space;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Polygon;
+import com.badlogic.gdx.math.Shape2D;
 import com.badlogic.gdx.math.Vector2;
-import com.test.game.Score.Score;
-import com.test.game.Space.Asteroid;
-import com.test.game.Spawners.AsteroidSpawner;
-import com.test.game.Spawners.BulletSpawner;
+import com.test.game.Config.BulletConfig;
+import com.test.game.Game;
 
-public class Bullet {
+public class Bullet extends SpaceObject {
 
-    private float rad;
-    private final float SPEED = 500f;
-    private Texture texture;
-    private TextureRegion textureRegion;
+    private static final BulletConfig bulletConfig = Game.getConfigManager().getConfig(BulletConfig.class);
 
-    private final String TEXTURE_NAME = "PNG/Lasers/laserBlue02.png";
-    private AsteroidSpawner asteroidSpawner;
-    private Polygon polygonCollider;
+    private Polygon collider;
     private float[] vertices;
-
-    private final float WIDTH = 10f;
-    private final float HEIGHT = 30f;
-
-    private final Vector2 position = new Vector2();
-    private final Vector2 angle = new Vector2();
     private Vector2 direction;
 
-    private Score score;
-    private BulletSpawner bulletSpawner;
+    public Bullet() {
+        super(bulletConfig.textureName);
+    }
 
-
-    public Bullet(float x, float y, Vector2 direction, AsteroidSpawner asteroidSpawner, Score score, BulletSpawner bulletSpawner) {
-        this.score = score;
-        this.asteroidSpawner = asteroidSpawner;
-        this.bulletSpawner = bulletSpawner;
-        texture = new Texture(TEXTURE_NAME);
-        textureRegion = new TextureRegion(texture);
+    public void init(float x, float y, Vector2 direction) {
         position.x = x;
         position.y = y;
+        width = bulletConfig.width;
+        height = bulletConfig.height;
+        speed = bulletConfig.speed;
         angle.set(direction);
         this.direction = new Vector2(direction.x, direction.y);
-        init();
+        initCollider();
     }
 
-    private void init() {
+    private void initCollider() {
         vertices = new float[]{
                 0f, 0f,
-                0f, HEIGHT,
-                WIDTH, HEIGHT,
-                WIDTH, 0f
+                0f, height,
+                width, height,
+                width, 0f
         };
-        polygonCollider = new Polygon(vertices);
-        polygonCollider.setOrigin(WIDTH/2, HEIGHT/2);
-        vertices = polygonCollider.getTransformedVertices();
-        polygonCollider.rotate(90);
-        polygonCollider.rotate(direction.angleDeg());
+        collider = new Polygon(vertices);
+        collider.setOrigin(width/2, height/2);
+        vertices = collider.getTransformedVertices();
+        collider.rotate(90);
+        collider.rotate(direction.angleDeg());
     }
-
-    public void moveTo(Vector2 direction) {
-        if (!Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT)) {
-        if (!overScreen()) {
-            direction = direction.nor();
-            direction = new Vector2(direction.x * SPEED * Gdx.graphics.getDeltaTime(), direction.y * SPEED * Gdx.graphics.getDeltaTime());
-            position.add(direction);
-        }
-        }
-    }
-
-    public boolean overScreen() {
-        if (position.x > Gdx.graphics.getWidth() || position.x < 0 || position.y > Gdx.graphics.getHeight() || position.y < 0) {
-            bulletSpawner.remove(this);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-//    @Override
-//    public void delete() {
-//        super.delete();
-//        Game.get().getShip().getBullets().remove(this);
-//    }
-
-    public void checkDestroy() {
-        if (!overScreen()) {
-            vertices = polygonCollider.getTransformedVertices();
-            for (Asteroid asteroid : asteroidSpawner.getAll()) {
-                if (asteroid.getCollider().contains(vertices[0], vertices[1])) {
-                    score.increaseScore();
-                    asteroidSpawner.remove(asteroid);
-                    bulletSpawner.remove(this);
-                }
-            }
-        }
-    }
-
-//    @Override
-//    public void loop() {
-//        move();
-//        if (overscreen()) {
-//            delete();
-//        }
-//        checkDestroy();
-//    }
 
     public void render(Batch batch) {
-        moveTo(direction);
-        polygonCollider.setPosition(position.x, position.y);
+        collider.setPosition(position.x, position.y);
+        moveTo();
         checkDestroy();
         batch.draw(
                 textureRegion,
                 position.x,
                 position.y,
-                WIDTH/2,
-                HEIGHT/2,
-                WIDTH,
-                HEIGHT,
+                width/2,
+                height/2,
+                width,
+                height,
                 1,
                 1,
                 angle.angleDeg() - 90
         );
     }
 
+    public void moveTo() {
+        overScreen();
+        position.add(angle.nor().scl(speed * Gdx.graphics.getDeltaTime()));
+    }
+
+    public void checkDestroy() {
+        vertices = collider.getTransformedVertices();
+        for (Asteroid asteroid : Game.getAsteroidSpawner().getAll()) {
+            if (asteroid.getCollider().contains(vertices[0], vertices[1])) {
+                Game.getScore().increaseScore();
+                Game.getAsteroidSpawner().remove(asteroid);
+                Game.getBulletSpawner().remove(this);
+            }
+        }
+    }
+
+    public void overScreen() {
+        if (position.x > Gdx.graphics.getWidth() || position.x < 0 || position.y > Gdx.graphics.getHeight() || position.y < 0) {
+            Game.getBulletSpawner().remove(this);
+        }
+    }
+
+    @Override
+    public Shape2D getCollider() {
+        return collider;
+    }
 }

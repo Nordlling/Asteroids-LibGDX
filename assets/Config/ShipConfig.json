@@ -1,0 +1,10 @@
+{
+  "fileName": "Config/ShipConfig.json",
+  "textureName" : "PNG/playerShip2_blue.png",
+  "width": 64,
+  "height": 64,
+  "invulnerabilityTime": 3,
+  "speed": 300,
+  "health": 3,
+  "noMoveDistance" : 10
+}

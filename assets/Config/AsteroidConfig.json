@@ -1,0 +1,9 @@
+{
+  "fileName": "Config/AsteroidConfig.json",
+  "folderTexture" : "PNG/Meteors",
+  "minSpeed" : 100,
+  "maxSpeed": 400,
+  "minSpeedRotation": 100,
+  "maxSpeedRotation": 400,
+  "count" : 15
+}
